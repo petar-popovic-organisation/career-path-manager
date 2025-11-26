@@ -29,10 +29,19 @@ export const AddCandidateDialog = ({ open, onOpenChange, onAddCandidate, process
       return;
     }
 
+    const initialHistory = formData.statusDescription ? [{
+      id: crypto.randomUUID(),
+      status: 'hr_started' as const,
+      description: formData.statusDescription,
+      timestamp: new Date().toISOString(),
+    }] : [];
+
     onAddCandidate({
-      ...formData,
+      name: formData.name,
+      email: formData.email,
       processId,
       status: 'hr_started',
+      statusHistory: initialHistory,
     });
     
     setFormData({ name: "", email: "", statusDescription: "" });
