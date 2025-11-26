@@ -4,14 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CandidateStatus } from "@/types/recruitment";
-import { toast } from "sonner";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { CandidateStatus, CandidateDecision } from "@/types/recruitment";
+import { useToast } from "@/hooks/use-toast";
 
 interface UpdateStatusDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentStatus: CandidateStatus;
-  onUpdateStatus: (status: CandidateStatus, description: string) => void;
+  onUpdateStatus: (status: CandidateStatus, description: string, decision?: CandidateDecision) => void;
   candidateName: string;
 }
 
@@ -29,21 +30,31 @@ export const UpdateStatusDialog = ({
   onUpdateStatus,
   candidateName 
 }: UpdateStatusDialogProps) => {
+  const { toast } = useToast();
   const [status, setStatus] = useState<CandidateStatus>(currentStatus);
   const [description, setDescription] = useState("");
+  const [decision, setDecision] = useState<CandidateDecision>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!description.trim()) {
-      toast.error("Please add a description for this status update");
+      toast({
+        title: "Error",
+        description: "Please add a description for this status update",
+        variant: "destructive",
+      });
       return;
     }
 
-    onUpdateStatus(status, description);
+    onUpdateStatus(status, description, decision);
     setDescription("");
+    setDecision(null);
     onOpenChange(false);
-    toast.success("Status updated successfully");
+    toast({
+      title: "Success",
+      description: "Status updated successfully",
+    });
   };
 
   return (
@@ -80,6 +91,23 @@ export const UpdateStatusDialog = ({
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
             />
+          </div>
+          <div className="space-y-3">
+            <Label>Decision (Optional)</Label>
+            <RadioGroup value={decision || "none"} onValueChange={(value) => setDecision(value === "none" ? null : value as CandidateDecision)}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="none" id="none" />
+                <Label htmlFor="none" className="font-normal cursor-pointer">No decision yet</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="pass" id="pass" />
+                <Label htmlFor="pass" className="font-normal cursor-pointer">Pass - Proceed to next stage</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="fail" id="fail" />
+                <Label htmlFor="fail" className="font-normal cursor-pointer">Fail - End recruitment process</Label>
+              </div>
+            </RadioGroup>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

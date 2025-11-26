@@ -4,6 +4,8 @@ export type CandidateStatus =
   | 'technical_second'
   | 'final_decision';
 
+export type CandidateDecision = 'pass' | 'fail' | null;
+
 export interface InterviewProcess {
   id: string;
   position: string;
@@ -19,15 +21,19 @@ export interface StatusUpdate {
   description: string;
   timestamp: string;
   updatedBy?: string;
+  decision?: CandidateDecision;
 }
 
 export interface Candidate {
   id: string;
   name: string;
   email: string;
+  linkedInUrl?: string;
+  desiredPriceRange?: string;
   processId: string;
   status: CandidateStatus;
   statusHistory: StatusUpdate[];
+  finalDecision?: CandidateDecision;
   createdAt: string;
   updatedAt: string;
 }

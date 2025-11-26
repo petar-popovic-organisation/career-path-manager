@@ -1,8 +1,9 @@
 import { StatusUpdate } from "@/types/recruitment";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { CandidateStatusBadge } from "./CandidateStatusBadge";
 import { format } from "date-fns";
-import { Clock } from "lucide-react";
+import { Clock, CheckCircle, XCircle } from "lucide-react";
 
 interface CandidateTimelineProps {
   history: StatusUpdate[];
@@ -32,8 +33,28 @@ export const CandidateTimeline = ({ history }: CandidateTimelineProps) => {
             </div>
             <Card className="flex-1">
               <CardContent className="pt-4">
-                <div className="flex items-start justify-between mb-2">
-                  <CandidateStatusBadge status={update.status} />
+                <div className="flex items-start justify-between mb-2 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <CandidateStatusBadge status={update.status} />
+                    {update.decision && (
+                      <Badge 
+                        variant={update.decision === 'pass' ? 'default' : 'destructive'}
+                        className="gap-1"
+                      >
+                        {update.decision === 'pass' ? (
+                          <>
+                            <CheckCircle className="h-3 w-3" />
+                            Passed
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="h-3 w-3" />
+                            Failed
+                          </>
+                        )}
+                      </Badge>
+                    )}
+                  </div>
                   <span className="text-xs text-muted-foreground">
                     {format(new Date(update.timestamp), 'MMM dd, yyyy HH:mm')}
                   </span>

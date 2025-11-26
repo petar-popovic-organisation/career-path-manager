@@ -8,8 +8,8 @@ import { AddCandidateDialog } from "@/components/AddCandidateDialog";
 import { UpdateStatusDialog } from "@/components/UpdateStatusDialog";
 import { CandidateStatusBadge } from "@/components/CandidateStatusBadge";
 import { CandidateTimeline } from "@/components/CandidateTimeline";
-import { InterviewProcess, Candidate, CandidateStatus } from "@/types/recruitment";
-import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare } from "lucide-react";
+import { InterviewProcess, Candidate, CandidateStatus, CandidateDecision } from "@/types/recruitment";
+import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ProcessDetails() {
@@ -41,7 +41,7 @@ export default function ProcessDetails() {
     setCandidates([...candidates, newCandidate]);
   };
 
-  const handleUpdateStatus = (candidateId: string, status: CandidateStatus, description: string) => {
+  const handleUpdateStatus = (candidateId: string, status: CandidateStatus, description: string, decision?: CandidateDecision) => {
     setCandidates(candidates.map(c => {
       if (c.id === candidateId) {
         const newUpdate = {
@@ -49,11 +49,13 @@ export default function ProcessDetails() {
           status,
           description,
           timestamp: new Date().toISOString(),
+          decision,
         };
         return {
           ...c,
           status,
           statusHistory: [...c.statusHistory, newUpdate],
+          finalDecision: decision === 'fail' ? 'fail' : c.finalDecision,
           updatedAt: new Date().toISOString(),
         };
       }
@@ -110,45 +112,80 @@ export default function ProcessDetails() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {candidates.map((candidate) => (
-              <Card key={candidate.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <CardTitle>{candidate.name}</CardTitle>
-                      <CardDescription className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        {candidate.email}
-                      </CardDescription>
+            {candidates.map((candidate) => {
+              const isFailed = candidate.finalDecision === 'fail';
+              
+              return (
+                <Card key={candidate.id} className={`hover:shadow-md transition-shadow ${isFailed ? 'opacity-75 border-destructive/50' : ''}`}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2">
+                          <CardTitle>{candidate.name}</CardTitle>
+                          {isFailed && (
+                            <Badge variant="destructive" className="gap-1">
+                              <XCircle className="h-3 w-3" />
+                              Failed
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          <CardDescription className="flex items-center gap-2">
+                            <Mail className="h-4 w-4" />
+                            {candidate.email}
+                          </CardDescription>
+                          {candidate.linkedInUrl && (
+                            <CardDescription className="flex items-center gap-2">
+                              <Linkedin className="h-4 w-4" />
+                              <a 
+                                href={candidate.linkedInUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="hover:underline text-primary"
+                              >
+                                LinkedIn Profile
+                              </a>
+                            </CardDescription>
+                          )}
+                          {candidate.desiredPriceRange && (
+                            <CardDescription className="flex items-center gap-2">
+                              <DollarSign className="h-4 w-4" />
+                              {candidate.desiredPriceRange}
+                            </CardDescription>
+                          )}
+                        </div>
+                      </div>
+                      <CandidateStatusBadge status={candidate.status} />
                     </div>
-                    <CandidateStatusBadge status={candidate.status} />
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Collapsible>
-                    <div className="flex items-center justify-between mb-2">
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="sm" className="gap-2">
-                          <MessageSquare className="h-4 w-4" />
-                          Interview History ({candidate.statusHistory.length} updates)
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </CollapsibleTrigger>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => openUpdateDialog(candidate)}
-                      >
-                        Add Comment
-                      </Button>
-                    </div>
-                    <CollapsibleContent className="pt-4">
-                      <CandidateTimeline history={candidate.statusHistory} />
-                    </CollapsibleContent>
-                  </Collapsible>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Collapsible>
+                      <div className="flex items-center justify-between mb-2">
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="gap-2">
+                            <MessageSquare className="h-4 w-4" />
+                            Interview History ({candidate.statusHistory.length} updates)
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                        </CollapsibleTrigger>
+                        {!isFailed && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => openUpdateDialog(candidate)}
+                          >
+                            Add Comment
+                          </Button>
+                        )}
+                      </div>
+                      <CollapsibleContent className="pt-4">
+                        <CandidateTimeline history={candidate.statusHistory} />
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </main>
@@ -165,7 +202,7 @@ export default function ProcessDetails() {
           open={updateDialogOpen}
           onOpenChange={setUpdateDialogOpen}
           currentStatus={selectedCandidate.status}
-          onUpdateStatus={(status, description) => handleUpdateStatus(selectedCandidate.id, status, description)}
+          onUpdateStatus={(status, description, decision) => handleUpdateStatus(selectedCandidate.id, status, description, decision)}
           candidateName={selectedCandidate.name}
         />
       )}
