@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Candidate } from "@/types/recruitment";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 
 interface AddCandidateDialogProps {
   open: boolean;
@@ -15,9 +15,12 @@ interface AddCandidateDialogProps {
 }
 
 export const AddCandidateDialog = ({ open, onOpenChange, onAddCandidate, processId }: AddCandidateDialogProps) => {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    linkedInUrl: "",
+    desiredPriceRange: "",
     statusDescription: "",
   });
 
@@ -25,7 +28,11 @@ export const AddCandidateDialog = ({ open, onOpenChange, onAddCandidate, process
     e.preventDefault();
     
     if (!formData.name || !formData.email) {
-      toast.error("Please fill in candidate name and email");
+      toast({
+        title: "Error",
+        description: "Please fill in candidate name and email",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -39,14 +46,19 @@ export const AddCandidateDialog = ({ open, onOpenChange, onAddCandidate, process
     onAddCandidate({
       name: formData.name,
       email: formData.email,
+      linkedInUrl: formData.linkedInUrl || undefined,
+      desiredPriceRange: formData.desiredPriceRange || undefined,
       processId,
       status: 'hr_started',
       statusHistory: initialHistory,
     });
     
-    setFormData({ name: "", email: "", statusDescription: "" });
+    setFormData({ name: "", email: "", linkedInUrl: "", desiredPriceRange: "", statusDescription: "" });
     onOpenChange(false);
-    toast.success("Candidate added successfully");
+    toast({
+      title: "Success",
+      description: "Candidate added successfully",
+    });
   };
 
   return (
@@ -76,6 +88,25 @@ export const AddCandidateDialog = ({ open, onOpenChange, onAddCandidate, process
               placeholder="candidate@example.com"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="linkedInUrl">LinkedIn URL (Optional)</Label>
+            <Input
+              id="linkedInUrl"
+              type="url"
+              placeholder="https://linkedin.com/in/username"
+              value={formData.linkedInUrl}
+              onChange={(e) => setFormData({ ...formData, linkedInUrl: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="desiredPriceRange">Desired Salary Range (Optional)</Label>
+            <Input
+              id="desiredPriceRange"
+              placeholder="e.g., $80,000 - $100,000"
+              value={formData.desiredPriceRange}
+              onChange={(e) => setFormData({ ...formData, desiredPriceRange: e.target.value })}
             />
           </div>
           <div className="space-y-2">
