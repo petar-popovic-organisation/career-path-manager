@@ -13,19 +13,21 @@ export interface InterviewProcess {
   createdAt: string;
 }
 
+export interface StatusUpdate {
+  id: string;
+  status: CandidateStatus;
+  description: string;
+  timestamp: string;
+  updatedBy?: string;
+}
+
 export interface Candidate {
   id: string;
   name: string;
   email: string;
   processId: string;
   status: CandidateStatus;
-  statusDescription: string;
+  statusHistory: StatusUpdate[];
   createdAt: string;
   updatedAt: string;
-}
-
-export interface StatusUpdate {
-  status: CandidateStatus;
-  description: string;
-  timestamp: string;
 }
