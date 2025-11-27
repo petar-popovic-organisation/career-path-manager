@@ -1,29 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ProcessCard } from "@/components/ProcessCard";
 import { CreateProcessDialog } from "@/components/CreateProcessDialog";
-import { InterviewProcess, Candidate } from "@/types/recruitment";
-import { Plus, Briefcase } from "lucide-react";
+import { InterviewProcess } from "@/types/recruitment";
+import { Plus, Briefcase, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useProcesses, useCandidateCount } from "@/hooks/useRecruitmentData";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [processes, setProcesses] = useState<InterviewProcess[]>([]);
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const { processes, loading, createProcess } = useProcesses();
+  const { counts, fetchCounts } = useCandidateCount();
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handleCreateProcess = (processData: Omit<InterviewProcess, 'id' | 'createdAt'>) => {
-    const newProcess: InterviewProcess = {
-      ...processData,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    };
-    setProcesses([...processes, newProcess]);
+  useEffect(() => {
+    if (processes.length > 0) {
+      fetchCounts(processes.map(p => p.id));
+    }
+  }, [processes]);
+
+  const handleCreateProcess = async (processData: Omit<InterviewProcess, 'id' | 'createdAt'>) => {
+    await createProcess(processData);
   };
 
-  const getCandidateCount = (processId: string) => {
-    return candidates.filter(c => c.processId === processId).length;
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -73,10 +79,8 @@ export default function Dashboard() {
                 <ProcessCard
                   key={process.id}
                   process={process}
-                  candidateCount={getCandidateCount(process.id)}
-                  onViewDetails={() => navigate(`/process/${process.id}`, { 
-                    state: { process, candidates: candidates.filter(c => c.processId === process.id) } 
-                  })}
+                  candidateCount={counts[process.id] || 0}
+                  onViewDetails={() => navigate(`/process/${process.id}`)}
                 />
               ))}
             </div>

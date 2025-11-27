@@ -4,18 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Candidate } from "@/types/recruitment";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface AddCandidateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddCandidate: (candidate: Omit<Candidate, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onAddCandidate: (candidate: {
+    name: string;
+    email: string;
+    linkedInUrl?: string;
+    desiredPriceRange?: string;
+    statusDescription?: string;
+  }) => Promise<void>;
   processId: string;
 }
 
-export const AddCandidateDialog = ({ open, onOpenChange, onAddCandidate, processId }: AddCandidateDialogProps) => {
-  const { toast } = useToast();
+export const AddCandidateDialog = ({ open, onOpenChange, onAddCandidate }: AddCandidateDialogProps) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -23,42 +27,34 @@ export const AddCandidateDialog = ({ open, onOpenChange, onAddCandidate, process
     desiredPriceRange: "",
     statusDescription: "",
   });
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name || !formData.email) {
-      toast({
-        title: "Error",
-        description: "Please fill in candidate name and email",
-        variant: "destructive",
-      });
+      toast.error("Please fill in candidate name and email");
       return;
     }
 
-    const initialHistory = formData.statusDescription ? [{
-      id: crypto.randomUUID(),
-      status: 'hr_started' as const,
-      description: formData.statusDescription,
-      timestamp: new Date().toISOString(),
-    }] : [];
-
-    onAddCandidate({
-      name: formData.name,
-      email: formData.email,
-      linkedInUrl: formData.linkedInUrl || undefined,
-      desiredPriceRange: formData.desiredPriceRange || undefined,
-      processId,
-      status: 'hr_started',
-      statusHistory: initialHistory,
-    });
-    
-    setFormData({ name: "", email: "", linkedInUrl: "", desiredPriceRange: "", statusDescription: "" });
-    onOpenChange(false);
-    toast({
-      title: "Success",
-      description: "Candidate added successfully",
-    });
+    setSubmitting(true);
+    try {
+      await onAddCandidate({
+        name: formData.name,
+        email: formData.email,
+        linkedInUrl: formData.linkedInUrl || undefined,
+        desiredPriceRange: formData.desiredPriceRange || undefined,
+        statusDescription: formData.statusDescription || undefined,
+      });
+      
+      setFormData({ name: "", email: "", linkedInUrl: "", desiredPriceRange: "", statusDescription: "" });
+      onOpenChange(false);
+      toast.success("Candidate added successfully");
+    } catch (error) {
+      // Error already handled in hook
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -123,7 +119,9 @@ export const AddCandidateDialog = ({ open, onOpenChange, onAddCandidate, process
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Add Candidate</Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Adding..." : "Add Candidate"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
