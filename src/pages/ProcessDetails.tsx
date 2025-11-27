@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,59 +8,53 @@ import { AddCandidateDialog } from "@/components/AddCandidateDialog";
 import { UpdateStatusDialog } from "@/components/UpdateStatusDialog";
 import { CandidateStatusBadge } from "@/components/CandidateStatusBadge";
 import { CandidateTimeline } from "@/components/CandidateTimeline";
-import { InterviewProcess, Candidate, CandidateStatus, CandidateDecision } from "@/types/recruitment";
-import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, CheckCircle } from "lucide-react";
+import { Candidate, CandidateStatus, CandidateDecision } from "@/types/recruitment";
+import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { useProcess, useCandidates } from "@/hooks/useRecruitmentData";
 
 export default function ProcessDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   
-  const [process, setProcess] = useState<InterviewProcess | null>(location.state?.process || null);
-  const [candidates, setCandidates] = useState<Candidate[]>(location.state?.candidates || []);
+  const { process, loading: processLoading } = useProcess(id!);
+  const { candidates, loading: candidatesLoading, addCandidate, updateCandidateStatus } = useCandidates(id!);
+  
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
-  useEffect(() => {
-    if (!process) {
-      navigate('/');
-    }
-  }, [process, navigate]);
+  const loading = processLoading || candidatesLoading;
 
-  if (!process) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-  const handleAddCandidate = (candidateData: Omit<Candidate, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newCandidate: Candidate = {
-      ...candidateData,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setCandidates([...candidates, newCandidate]);
+  if (!process) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+        <h2 className="text-xl font-semibold mb-4">Process not found</h2>
+        <Button onClick={() => navigate('/')}>Back to Dashboard</Button>
+      </div>
+    );
+  }
+
+  const handleAddCandidate = async (candidateData: {
+    name: string;
+    email: string;
+    linkedInUrl?: string;
+    desiredPriceRange?: string;
+    statusDescription?: string;
+  }) => {
+    await addCandidate(candidateData);
   };
 
-  const handleUpdateStatus = (candidateId: string, status: CandidateStatus, description: string, decision?: CandidateDecision) => {
-    setCandidates(candidates.map(c => {
-      if (c.id === candidateId) {
-        const newUpdate = {
-          id: crypto.randomUUID(),
-          status,
-          description,
-          timestamp: new Date().toISOString(),
-          decision,
-        };
-        return {
-          ...c,
-          status,
-          statusHistory: [...c.statusHistory, newUpdate],
-          finalDecision: decision === 'fail' ? 'fail' : c.finalDecision,
-          updatedAt: new Date().toISOString(),
-        };
-      }
-      return c;
-    }));
+  const handleUpdateStatus = async (candidateId: string, status: CandidateStatus, description: string, decision?: CandidateDecision) => {
+    await updateCandidateStatus(candidateId, status, description, decision);
   };
 
   const openUpdateDialog = (candidate: Candidate) => {

@@ -14,7 +14,127 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      candidates: {
+        Row: {
+          created_at: string
+          desired_price_range: string | null
+          email: string
+          final_decision:
+            | Database["public"]["Enums"]["candidate_decision"]
+            | null
+          id: string
+          linkedin_url: string | null
+          name: string
+          process_id: string
+          status: Database["public"]["Enums"]["candidate_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          desired_price_range?: string | null
+          email: string
+          final_decision?:
+            | Database["public"]["Enums"]["candidate_decision"]
+            | null
+          id?: string
+          linkedin_url?: string | null
+          name: string
+          process_id: string
+          status?: Database["public"]["Enums"]["candidate_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          desired_price_range?: string | null
+          email?: string
+          final_decision?:
+            | Database["public"]["Enums"]["candidate_decision"]
+            | null
+          id?: string
+          linkedin_url?: string | null
+          name?: string
+          process_id?: string
+          status?: Database["public"]["Enums"]["candidate_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidates_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "interview_processes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interview_processes: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          position: string
+          role: string
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          position: string
+          role: string
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          position?: string
+          role?: string
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      status_updates: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          decision: Database["public"]["Enums"]["candidate_decision"] | null
+          description: string
+          id: string
+          status: Database["public"]["Enums"]["candidate_status"]
+          updated_by: string | null
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          decision?: Database["public"]["Enums"]["candidate_decision"] | null
+          description: string
+          id?: string
+          status: Database["public"]["Enums"]["candidate_status"]
+          updated_by?: string | null
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          decision?: Database["public"]["Enums"]["candidate_decision"] | null
+          description?: string
+          id?: string
+          status?: Database["public"]["Enums"]["candidate_status"]
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_updates_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +143,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      candidate_decision: "pass" | "fail"
+      candidate_status:
+        | "hr_started"
+        | "technical_first"
+        | "technical_second"
+        | "final_decision"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +275,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      candidate_decision: ["pass", "fail"],
+      candidate_status: [
+        "hr_started",
+        "technical_first",
+        "technical_second",
+        "final_decision",
+      ],
+    },
   },
 } as const

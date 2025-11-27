@@ -9,7 +9,7 @@ import { toast } from "sonner";
 interface CreateProcessDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateProcess: (process: Omit<InterviewProcess, 'id' | 'createdAt'>) => void;
+  onCreateProcess: (process: Omit<InterviewProcess, 'id' | 'createdAt'>) => Promise<void>;
 }
 
 export const CreateProcessDialog = ({ open, onOpenChange, onCreateProcess }: CreateProcessDialogProps) => {
@@ -19,8 +19,9 @@ export const CreateProcessDialog = ({ open, onOpenChange, onCreateProcess }: Cre
     startDate: "",
     endDate: "",
   });
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.position || !formData.role || !formData.startDate || !formData.endDate) {
@@ -33,10 +34,17 @@ export const CreateProcessDialog = ({ open, onOpenChange, onCreateProcess }: Cre
       return;
     }
 
-    onCreateProcess(formData);
-    setFormData({ position: "", role: "", startDate: "", endDate: "" });
-    onOpenChange(false);
-    toast.success("Interview process created successfully");
+    setSubmitting(true);
+    try {
+      await onCreateProcess(formData);
+      setFormData({ position: "", role: "", startDate: "", endDate: "" });
+      onOpenChange(false);
+      toast.success("Interview process created successfully");
+    } catch (error) {
+      // Error already handled in hook
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -91,7 +99,9 @@ export const CreateProcessDialog = ({ open, onOpenChange, onCreateProcess }: Cre
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Create Process</Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Creating..." : "Create Process"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
