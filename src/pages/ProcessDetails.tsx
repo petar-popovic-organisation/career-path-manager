@@ -1,17 +1,27 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AddCandidateDialog } from "@/components/AddCandidateDialog";
 import { UpdateStatusDialog } from "@/components/UpdateStatusDialog";
 import { CandidateStatusBadge } from "@/components/CandidateStatusBadge";
 import { CandidateTimeline } from "@/components/CandidateTimeline";
 import { Candidate, CandidateStatus, CandidateDecision } from "@/types/recruitment";
-import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2, Star } from "lucide-react";
+import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2, Star, Calendar, ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { useProcess, useCandidates } from "@/hooks/useRecruitmentData";
+
+type SortOption = 'latest' | 'oldest' | 'rating_high' | 'rating_low' | 'status';
+
+const STATUS_ORDER: Record<CandidateStatus, number> = {
+  'hr_started': 1,
+  'technical_first': 2,
+  'technical_second': 3,
+  'final_decision': 4,
+};
 
 export default function ProcessDetails() {
   const { id } = useParams();
@@ -23,7 +33,26 @@ export default function ProcessDetails() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>('latest');
 
+  const sortedCandidates = useMemo(() => {
+    return [...candidates].sort((a, b) => {
+      switch (sortBy) {
+        case 'latest':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case 'oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'rating_high':
+          return (b.rating || 0) - (a.rating || 0);
+        case 'rating_low':
+          return (a.rating || 0) - (b.rating || 0);
+        case 'status':
+          return STATUS_ORDER[b.status] - STATUS_ORDER[a.status];
+        default:
+          return 0;
+      }
+    });
+  }, [candidates, sortBy]);
   const loading = processLoading || candidatesLoading;
   const isProcessActive = process ? new Date(process.endDate) >= new Date() : false;
 
@@ -120,7 +149,22 @@ export default function ProcessDetails() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {candidates.map((candidate) => {
+            <div className="flex items-center justify-end gap-2">
+              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="latest">Latest First</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                  <SelectItem value="rating_high">Rating (High to Low)</SelectItem>
+                  <SelectItem value="rating_low">Rating (Low to High)</SelectItem>
+                  <SelectItem value="status">Status Progress</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {sortedCandidates.map((candidate) => {
               const isFailed = candidate.finalDecision === 'fail';
               const isHighRated = candidate.rating && candidate.rating > 5;
               
@@ -168,6 +212,10 @@ export default function ProcessDetails() {
                               {candidate.desiredPriceRange}
                             </CardDescription>
                           )}
+                          <CardDescription className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            Added {format(new Date(candidate.createdAt), 'MMM dd, yyyy')}
+                          </CardDescription>
                         </div>
                       </div>
                       <CandidateStatusBadge status={candidate.status} />
