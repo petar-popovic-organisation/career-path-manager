@@ -25,6 +25,7 @@ export default function ProcessDetails() {
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
   const loading = processLoading || candidatesLoading;
+  const isProcessActive = process ? new Date(process.endDate) >= new Date() : false;
 
   if (loading) {
     return (
@@ -79,10 +80,20 @@ export default function ProcessDetails() {
                 <Badge variant="outline">{candidates.length} candidates</Badge>
               </div>
             </div>
-            <Button onClick={() => setAddDialogOpen(true)} size="lg">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Candidate
-            </Button>
+            <div className="flex items-center gap-3">
+              <Badge 
+                variant={isProcessActive ? "default" : "secondary"}
+                className={isProcessActive ? "bg-green-500 hover:bg-green-600 text-white" : ""}
+              >
+                {isProcessActive ? "Active" : "Closed"}
+              </Badge>
+              {isProcessActive && (
+                <Button onClick={() => setAddDialogOpen(true)} size="lg">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Candidate
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -98,10 +109,12 @@ export default function ProcessDetails() {
               <p className="mb-4 text-muted-foreground">
                 Start adding candidates to this selection process
               </p>
-              <Button onClick={() => setAddDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add First Candidate
-              </Button>
+              {isProcessActive && (
+                <Button onClick={() => setAddDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add First Candidate
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -162,7 +175,7 @@ export default function ProcessDetails() {
                             <ChevronDown className="h-4 w-4" />
                           </Button>
                         </CollapsibleTrigger>
-                        {!isFailed && (
+                        {!isFailed && isProcessActive && (
                           <Button 
                             variant="outline" 
                             size="sm"
