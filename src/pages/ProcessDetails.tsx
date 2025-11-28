@@ -9,7 +9,7 @@ import { UpdateStatusDialog } from "@/components/UpdateStatusDialog";
 import { CandidateStatusBadge } from "@/components/CandidateStatusBadge";
 import { CandidateTimeline } from "@/components/CandidateTimeline";
 import { Candidate, CandidateStatus, CandidateDecision } from "@/types/recruitment";
-import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2, Star } from "lucide-react";
 import { format } from "date-fns";
 import { useProcess, useCandidates } from "@/hooks/useRecruitmentData";
 
@@ -49,6 +49,7 @@ export default function ProcessDetails() {
     email: string;
     linkedInUrl?: string;
     desiredPriceRange?: string;
+    rating?: number;
     statusDescription?: string;
   }) => {
     await addCandidate(candidateData);
@@ -121,14 +122,21 @@ export default function ProcessDetails() {
           <div className="space-y-4">
             {candidates.map((candidate) => {
               const isFailed = candidate.finalDecision === 'fail';
+              const isHighRated = candidate.rating && candidate.rating > 5;
               
               return (
-                <Card key={candidate.id} className={`hover:shadow-md transition-shadow ${isFailed ? 'opacity-75 border-destructive/50' : ''}`}>
+                <Card key={candidate.id} className={`hover:shadow-md transition-shadow ${isFailed ? 'opacity-75 border-destructive/50' : ''} ${isHighRated && !isFailed ? 'border-green-500 border-2 bg-green-50/50 dark:bg-green-950/20' : ''}`}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="space-y-2 flex-1">
                         <div className="flex items-center gap-2">
                           <CardTitle>{candidate.name}</CardTitle>
+                          {candidate.rating && (
+                            <Badge variant={isHighRated ? "default" : "secondary"} className={`gap-1 ${isHighRated ? 'bg-green-500 hover:bg-green-600 text-white' : ''}`}>
+                              <Star className="h-3 w-3" />
+                              {candidate.rating}/10
+                            </Badge>
+                          )}
                           {isFailed && (
                             <Badge variant="destructive" className="gap-1">
                               <XCircle className="h-3 w-3" />

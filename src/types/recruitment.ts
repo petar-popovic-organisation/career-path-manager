@@ -30,6 +30,7 @@ export interface Candidate {
   email: string;
   linkedInUrl?: string;
   desiredPriceRange?: string;
+  rating?: number;
   processId: string;
   status: CandidateStatus;
   statusHistory: StatusUpdate[];

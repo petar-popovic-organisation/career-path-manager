@@ -26,6 +26,7 @@ export type Database = {
           linkedin_url: string | null
           name: string
           process_id: string
+          rating: number | null
           status: Database["public"]["Enums"]["candidate_status"]
           updated_at: string
         }
@@ -40,6 +41,7 @@ export type Database = {
           linkedin_url?: string | null
           name: string
           process_id: string
+          rating?: number | null
           status?: Database["public"]["Enums"]["candidate_status"]
           updated_at?: string
         }
@@ -54,6 +56,7 @@ export type Database = {
           linkedin_url?: string | null
           name?: string
           process_id?: string
+          rating?: number | null
           status?: Database["public"]["Enums"]["candidate_status"]
           updated_at?: string
         }

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 
 interface AddCandidateDialogProps {
@@ -14,6 +15,7 @@ interface AddCandidateDialogProps {
     email: string;
     linkedInUrl?: string;
     desiredPriceRange?: string;
+    rating?: number;
     statusDescription?: string;
   }) => Promise<void>;
   processId: string;
@@ -25,6 +27,7 @@ export const AddCandidateDialog = ({ open, onOpenChange, onAddCandidate }: AddCa
     email: "",
     linkedInUrl: "",
     desiredPriceRange: "",
+    rating: 5,
     statusDescription: "",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -44,10 +47,11 @@ export const AddCandidateDialog = ({ open, onOpenChange, onAddCandidate }: AddCa
         email: formData.email,
         linkedInUrl: formData.linkedInUrl || undefined,
         desiredPriceRange: formData.desiredPriceRange || undefined,
+        rating: formData.rating,
         statusDescription: formData.statusDescription || undefined,
       });
       
-      setFormData({ name: "", email: "", linkedInUrl: "", desiredPriceRange: "", statusDescription: "" });
+      setFormData({ name: "", email: "", linkedInUrl: "", desiredPriceRange: "", rating: 5, statusDescription: "" });
       onOpenChange(false);
       toast.success("Candidate added successfully");
     } catch (error) {
@@ -104,6 +108,20 @@ export const AddCandidateDialog = ({ open, onOpenChange, onAddCandidate }: AddCa
               value={formData.desiredPriceRange}
               onChange={(e) => setFormData({ ...formData, desiredPriceRange: e.target.value })}
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Rating: {formData.rating}/10</Label>
+            <Slider
+              value={[formData.rating]}
+              onValueChange={(value) => setFormData({ ...formData, rating: value[0] })}
+              min={1}
+              max={10}
+              step={1}
+              className="py-2"
+            />
+            <p className="text-xs text-muted-foreground">
+              Candidates rated above 5 will be highlighted in green
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Initial Notes (Optional)</Label>

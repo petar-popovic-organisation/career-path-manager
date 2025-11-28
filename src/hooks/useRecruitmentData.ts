@@ -124,6 +124,7 @@ export const useCandidates = (processId: string) => {
           email: c.email,
           linkedInUrl: c.linkedin_url || undefined,
           desiredPriceRange: c.desired_price_range || undefined,
+          rating: c.rating || undefined,
           processId: c.process_id,
           status: c.status as CandidateStatus,
           statusHistory: history,
@@ -147,6 +148,7 @@ export const useCandidates = (processId: string) => {
     email: string;
     linkedInUrl?: string;
     desiredPriceRange?: string;
+    rating?: number;
     statusDescription?: string;
   }) => {
     try {
@@ -158,6 +160,7 @@ export const useCandidates = (processId: string) => {
           email: candidateData.email,
           linkedin_url: candidateData.linkedInUrl || null,
           desired_price_range: candidateData.desiredPriceRange || null,
+          rating: candidateData.rating || null,
           status: 'hr_started' as DbCandidateStatus,
         })
         .select()
