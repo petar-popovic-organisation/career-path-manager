@@ -22,7 +22,10 @@ export const ProcessCard = ({ process, candidateCount, onViewDetails }: ProcessC
             <CardTitle className="text-xl">{process.position}</CardTitle>
             <CardDescription className="text-base">{process.role}</CardDescription>
           </div>
-          <Badge variant={isActive ? "default" : "secondary"}>
+          <Badge 
+            variant={isActive ? "default" : "secondary"}
+            className={isActive ? "bg-green-500 hover:bg-green-600 text-white" : ""}
+          >
             {isActive ? "Active" : "Closed"}
           </Badge>
         </div>
