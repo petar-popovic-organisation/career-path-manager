@@ -10,17 +10,18 @@ import { UpdateStatusDialog } from "@/components/UpdateStatusDialog";
 import { CandidateStatusBadge } from "@/components/CandidateStatusBadge";
 import { CandidateTimeline } from "@/components/CandidateTimeline";
 import { Candidate, CandidateStatus, CandidateDecision } from "@/types/recruitment";
-import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2, Star, Calendar, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2, Star, Calendar, ArrowUpDown, Github } from "lucide-react";
 import { format } from "date-fns";
 import { useProcess, useCandidates } from "@/hooks/useRecruitmentData";
 
 type SortOption = 'latest' | 'oldest' | 'rating_high' | 'rating_low' | 'status';
 
 const STATUS_ORDER: Record<CandidateStatus, number> = {
-  'hr_started': 1,
-  'technical_first': 2,
-  'technical_second': 3,
-  'final_decision': 4,
+  'initial': 1,
+  'hr_thoughts': 2,
+  'technical_first': 3,
+  'technical_second': 4,
+  'final_decision': 5,
 };
 
 export default function ProcessDetails() {
@@ -84,8 +85,8 @@ export default function ProcessDetails() {
     await addCandidate(candidateData);
   };
 
-  const handleUpdateStatus = async (candidateId: string, status: CandidateStatus, description: string, decision?: CandidateDecision) => {
-    await updateCandidateStatus(candidateId, status, description, decision);
+  const handleUpdateStatus = async (candidateId: string, status: CandidateStatus, description: string, decision?: CandidateDecision, githubTaskUrl?: string) => {
+    await updateCandidateStatus(candidateId, status, description, decision, githubTaskUrl);
   };
 
   const openUpdateDialog = (candidate: Candidate) => {
@@ -212,10 +213,23 @@ export default function ProcessDetails() {
                               {candidate.desiredPriceRange}
                             </CardDescription>
                           )}
-                          <CardDescription className="flex items-center gap-2">
+          <CardDescription className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
                             Added {format(new Date(candidate.createdAt), 'MMM dd, yyyy')}
                           </CardDescription>
+                          {candidate.githubTaskUrl && (
+                            <CardDescription className="flex items-center gap-2">
+                              <Github className="h-4 w-4" />
+                              <a 
+                                href={candidate.githubTaskUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="hover:underline text-primary"
+                              >
+                                Task Repository
+                              </a>
+                            </CardDescription>
+                          )}
                         </div>
                       </div>
                       <CandidateStatusBadge status={candidate.status} />
@@ -265,7 +279,7 @@ export default function ProcessDetails() {
           open={updateDialogOpen}
           onOpenChange={setUpdateDialogOpen}
           currentStatus={selectedCandidate.status}
-          onUpdateStatus={(status, description, decision) => handleUpdateStatus(selectedCandidate.id, status, description, decision)}
+          onUpdateStatus={(status, description, decision, githubTaskUrl) => handleUpdateStatus(selectedCandidate.id, status, description, decision, githubTaskUrl)}
           candidateName={selectedCandidate.name}
         />
       )}
