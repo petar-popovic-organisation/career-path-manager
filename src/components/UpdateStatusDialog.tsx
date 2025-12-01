@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CandidateStatus, CandidateDecision } from "@/types/recruitment";
@@ -12,12 +13,13 @@ interface UpdateStatusDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentStatus: CandidateStatus;
-  onUpdateStatus: (status: CandidateStatus, description: string, decision?: CandidateDecision) => void;
+  onUpdateStatus: (status: CandidateStatus, description: string, decision?: CandidateDecision, githubTaskUrl?: string) => void;
   candidateName: string;
 }
 
 const statusOptions: { value: CandidateStatus; label: string }[] = [
-  { value: 'hr_started', label: 'HR Started' },
+  { value: 'initial', label: 'Initial' },
+  { value: 'hr_thoughts', label: 'HR Thoughts' },
   { value: 'technical_first', label: 'Technical Round 1' },
   { value: 'technical_second', label: 'Technical Round 2' },
   { value: 'final_decision', label: 'Final Decision' },
@@ -34,6 +36,16 @@ export const UpdateStatusDialog = ({
   const [status, setStatus] = useState<CandidateStatus>(currentStatus);
   const [description, setDescription] = useState("");
   const [decision, setDecision] = useState<CandidateDecision>(null);
+  const [githubTaskUrl, setGithubTaskUrl] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setStatus(currentStatus);
+      setDescription("");
+      setDecision(null);
+      setGithubTaskUrl("");
+    }
+  }, [open, currentStatus]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,9 +59,10 @@ export const UpdateStatusDialog = ({
       return;
     }
 
-    onUpdateStatus(status, description, decision);
+    onUpdateStatus(status, description, decision, status === 'technical_second' ? githubTaskUrl : undefined);
     setDescription("");
     setDecision(null);
+    setGithubTaskUrl("");
     onOpenChange(false);
     toast({
       title: "Success",
@@ -92,6 +105,21 @@ export const UpdateStatusDialog = ({
               rows={4}
             />
           </div>
+          {status === 'technical_second' && (
+            <div className="space-y-2">
+              <Label htmlFor="githubUrl">GitHub Task URL</Label>
+              <Input
+                id="githubUrl"
+                type="url"
+                placeholder="https://github.com/user/repo"
+                value={githubTaskUrl}
+                onChange={(e) => setGithubTaskUrl(e.target.value)}
+              />
+              <p className="text-sm text-muted-foreground">
+                Link to the candidate's completed task repository
+              </p>
+            </div>
+          )}
           <div className="space-y-3">
             <Label>Decision (Optional)</Label>
             <RadioGroup value={decision || "none"} onValueChange={(value) => setDecision(value === "none" ? null : value as CandidateDecision)}>

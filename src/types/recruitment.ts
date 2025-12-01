@@ -1,5 +1,6 @@
 export type CandidateStatus = 
-  | 'hr_started'
+  | 'initial'
+  | 'hr_thoughts'
   | 'technical_first'
   | 'technical_second'
   | 'final_decision';
@@ -31,6 +32,7 @@ export interface Candidate {
   linkedInUrl?: string;
   desiredPriceRange?: string;
   rating?: number;
+  githubTaskUrl?: string;
   processId: string;
   status: CandidateStatus;
   statusHistory: StatusUpdate[];

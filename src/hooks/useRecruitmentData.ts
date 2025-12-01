@@ -3,8 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { InterviewProcess, Candidate, StatusUpdate, CandidateStatus, CandidateDecision } from "@/types/recruitment";
 import { toast } from "sonner";
 
-// Type helpers for database enums
-type DbCandidateStatus = 'hr_started' | 'technical_first' | 'technical_second' | 'final_decision';
+// Type helpers for database
 type DbCandidateDecision = 'pass' | 'fail';
 
 export const useProcesses = () => {
@@ -125,6 +124,7 @@ export const useCandidates = (processId: string) => {
           linkedInUrl: c.linkedin_url || undefined,
           desiredPriceRange: c.desired_price_range || undefined,
           rating: c.rating || undefined,
+          githubTaskUrl: (c as any).github_task_url || undefined,
           processId: c.process_id,
           status: c.status as CandidateStatus,
           statusHistory: history,
@@ -161,7 +161,7 @@ export const useCandidates = (processId: string) => {
           linkedin_url: candidateData.linkedInUrl || null,
           desired_price_range: candidateData.desiredPriceRange || null,
           rating: candidateData.rating || null,
-          status: 'hr_started' as DbCandidateStatus,
+          status: 'initial',
         })
         .select()
         .single();
@@ -173,7 +173,7 @@ export const useCandidates = (processId: string) => {
           .from('status_updates')
           .insert({
             candidate_id: candidate.id,
-            status: 'hr_started' as DbCandidateStatus,
+            status: 'initial',
             description: candidateData.statusDescription,
           });
       }
@@ -191,7 +191,8 @@ export const useCandidates = (processId: string) => {
     candidateId: string,
     status: CandidateStatus,
     description: string,
-    decision?: CandidateDecision
+    decision?: CandidateDecision,
+    githubTaskUrl?: string
   ) => {
     try {
       // Insert status update
@@ -199,7 +200,7 @@ export const useCandidates = (processId: string) => {
         .from('status_updates')
         .insert({
           candidate_id: candidateId,
-          status: status as DbCandidateStatus,
+          status: status,
           description,
           decision: decision as DbCandidateDecision | null,
         });
@@ -207,12 +208,16 @@ export const useCandidates = (processId: string) => {
       if (updateError) throw updateError;
 
       // Update candidate status and final decision if failed
-      const updates: { status: DbCandidateStatus; final_decision?: DbCandidateDecision | null } = {
-        status: status as DbCandidateStatus,
+      const updates: { status: string; final_decision?: DbCandidateDecision | null; github_task_url?: string | null } = {
+        status: status,
       };
       
       if (decision === 'fail') {
         updates.final_decision = 'fail';
+      }
+
+      if (githubTaskUrl) {
+        updates.github_task_url = githubTaskUrl;
       }
 
       const { error: candidateError } = await supabase

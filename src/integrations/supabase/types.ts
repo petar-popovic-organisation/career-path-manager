@@ -28,7 +28,7 @@ export type Database = {
           name: string
           process_id: string
           rating: number | null
-          status: Database["public"]["Enums"]["candidate_status"]
+          status: string
           updated_at: string
         }
         Insert: {
@@ -44,7 +44,7 @@ export type Database = {
           name: string
           process_id: string
           rating?: number | null
-          status?: Database["public"]["Enums"]["candidate_status"]
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -60,7 +60,7 @@ export type Database = {
           name?: string
           process_id?: string
           rating?: number | null
-          status?: Database["public"]["Enums"]["candidate_status"]
+          status?: string
           updated_at?: string
         }
         Relationships: [
@@ -110,7 +110,7 @@ export type Database = {
           decision: Database["public"]["Enums"]["candidate_decision"] | null
           description: string
           id: string
-          status: Database["public"]["Enums"]["candidate_status"]
+          status: string
           updated_by: string | null
         }
         Insert: {
@@ -119,7 +119,7 @@ export type Database = {
           decision?: Database["public"]["Enums"]["candidate_decision"] | null
           description: string
           id?: string
-          status: Database["public"]["Enums"]["candidate_status"]
+          status: string
           updated_by?: string | null
         }
         Update: {
@@ -128,7 +128,7 @@ export type Database = {
           decision?: Database["public"]["Enums"]["candidate_decision"] | null
           description?: string
           id?: string
-          status?: Database["public"]["Enums"]["candidate_status"]
+          status?: string
           updated_by?: string | null
         }
         Relationships: [
