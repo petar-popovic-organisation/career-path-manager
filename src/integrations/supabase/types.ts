@@ -22,6 +22,7 @@ export type Database = {
           final_decision:
             | Database["public"]["Enums"]["candidate_decision"]
             | null
+          github_task_url: string | null
           id: string
           linkedin_url: string | null
           name: string
@@ -37,6 +38,7 @@ export type Database = {
           final_decision?:
             | Database["public"]["Enums"]["candidate_decision"]
             | null
+          github_task_url?: string | null
           id?: string
           linkedin_url?: string | null
           name: string
@@ -52,6 +54,7 @@ export type Database = {
           final_decision?:
             | Database["public"]["Enums"]["candidate_decision"]
             | null
+          github_task_url?: string | null
           id?: string
           linkedin_url?: string | null
           name?: string
