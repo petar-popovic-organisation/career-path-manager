@@ -60,9 +60,10 @@ export const CandidateTimeline = ({ history }: CandidateTimelineProps) => {
                   </span>
                 </div>
                 {update.description && (
-                  <p className="text-sm mt-2 text-foreground whitespace-pre-wrap">
-                    {update.description}
-                  </p>
+                  <div 
+                    className="text-sm mt-2 text-foreground prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground"
+                    dangerouslySetInnerHTML={{ __html: update.description }}
+                  />
                 )}
               </CardContent>
             </Card>
