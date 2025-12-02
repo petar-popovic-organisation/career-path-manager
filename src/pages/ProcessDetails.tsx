@@ -9,10 +9,13 @@ import { AddCandidateDialog } from "@/components/AddCandidateDialog";
 import { UpdateStatusDialog } from "@/components/UpdateStatusDialog";
 import { CandidateStatusBadge } from "@/components/CandidateStatusBadge";
 import { CandidateTimeline } from "@/components/CandidateTimeline";
+import { UserMenu } from "@/components/UserMenu";
 import { Candidate, CandidateStatus, CandidateDecision } from "@/types/recruitment";
 import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2, Star, Calendar, ArrowUpDown, Github } from "lucide-react";
 import { format } from "date-fns";
 import { useProcess, useCandidates } from "@/hooks/useRecruitmentData";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { canManageCandidates, isViewOnly } from "@/types/auth";
 
 type SortOption = 'latest' | 'oldest' | 'rating_high' | 'rating_low' | 'status';
 
@@ -27,6 +30,7 @@ const STATUS_ORDER: Record<CandidateStatus, number> = {
 export default function ProcessDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { role } = useAuthContext();
   
   const { process, loading: processLoading } = useProcess(id!);
   const { candidates, loading: candidatesLoading, addCandidate, updateCandidateStatus } = useCandidates(id!);
@@ -35,6 +39,9 @@ export default function ProcessDetails() {
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('latest');
+
+  const canManage = canManageCandidates(role);
+  const viewOnly = isViewOnly(role);
 
   const sortedCandidates = useMemo(() => {
     return [...candidates].sort((a, b) => {
@@ -98,10 +105,13 @@ export default function ProcessDetails() {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">
-          <Button variant="ghost" onClick={() => navigate('/')} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
-          </Button>
+          <div className="flex items-center justify-between mb-4">
+            <Button variant="ghost" onClick={() => navigate('/')}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Dashboard
+            </Button>
+            <UserMenu />
+          </div>
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-3xl font-bold">{process.position}</h1>
@@ -109,6 +119,9 @@ export default function ProcessDetails() {
               <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
                 <span>{format(new Date(process.startDate), 'MMM dd')} - {format(new Date(process.endDate), 'MMM dd, yyyy')}</span>
                 <Badge variant="outline">{candidates.length} candidates</Badge>
+                {viewOnly && (
+                  <Badge variant="secondary">View Only</Badge>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -118,7 +131,7 @@ export default function ProcessDetails() {
               >
                 {isProcessActive ? "Active" : "Closed"}
               </Badge>
-              {isProcessActive && (
+              {isProcessActive && canManage && (
                 <Button onClick={() => setAddDialogOpen(true)} size="lg">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Candidate
@@ -138,9 +151,11 @@ export default function ProcessDetails() {
               </div>
               <h3 className="mb-2 text-xl font-semibold">No Candidates Yet</h3>
               <p className="mb-4 text-muted-foreground">
-                Start adding candidates to this selection process
+                {canManage 
+                  ? "Start adding candidates to this selection process"
+                  : "No candidates have been added to this process yet"}
               </p>
-              {isProcessActive && (
+              {isProcessActive && canManage && (
                 <Button onClick={() => setAddDialogOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add First Candidate
@@ -213,7 +228,7 @@ export default function ProcessDetails() {
                               {candidate.desiredPriceRange}
                             </CardDescription>
                           )}
-          <CardDescription className="flex items-center gap-2">
+                          <CardDescription className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
                             Added {format(new Date(candidate.createdAt), 'MMM dd, yyyy')}
                           </CardDescription>
@@ -245,7 +260,7 @@ export default function ProcessDetails() {
                             <ChevronDown className="h-4 w-4" />
                           </Button>
                         </CollapsibleTrigger>
-                        {!isFailed && isProcessActive && (
+                        {!isFailed && isProcessActive && canManage && (
                           <Button 
                             variant="outline" 
                             size="sm"
@@ -267,14 +282,16 @@ export default function ProcessDetails() {
         )}
       </main>
 
-      <AddCandidateDialog
-        open={addDialogOpen}
-        onOpenChange={setAddDialogOpen}
-        onAddCandidate={handleAddCandidate}
-        processId={id!}
-      />
+      {canManage && (
+        <AddCandidateDialog
+          open={addDialogOpen}
+          onOpenChange={setAddDialogOpen}
+          onAddCandidate={handleAddCandidate}
+          processId={id!}
+        />
+      )}
 
-      {selectedCandidate && (
+      {selectedCandidate && canManage && (
         <UpdateStatusDialog
           open={updateDialogOpen}
           onOpenChange={setUpdateDialogOpen}
