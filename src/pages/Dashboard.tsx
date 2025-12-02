@@ -2,16 +2,22 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ProcessCard } from "@/components/ProcessCard";
 import { CreateProcessDialog } from "@/components/CreateProcessDialog";
+import { UserMenu } from "@/components/UserMenu";
 import { InterviewProcess } from "@/types/recruitment";
 import { Plus, Briefcase, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useProcesses, useCandidateCount } from "@/hooks/useRecruitmentData";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { canManageProcesses } from "@/types/auth";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { role } = useAuthContext();
   const { processes, loading, createProcess } = useProcesses();
   const { counts, fetchCounts } = useCandidateCount();
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const canCreate = canManageProcesses(role);
 
   useEffect(() => {
     if (processes.length > 0) {
@@ -45,10 +51,15 @@ export default function Dashboard() {
                 <p className="text-sm text-muted-foreground">Recruitment & Selection System</p>
               </div>
             </div>
-            <Button onClick={() => setDialogOpen(true)} size="lg">
-              <Plus className="mr-2 h-4 w-4" />
-              New Process
-            </Button>
+            <div className="flex items-center gap-3">
+              {canCreate && (
+                <Button onClick={() => setDialogOpen(true)} size="lg">
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Process
+                </Button>
+              )}
+              <UserMenu />
+            </div>
           </div>
         </div>
       </header>
@@ -61,12 +72,16 @@ export default function Dashboard() {
             </div>
             <h2 className="mb-2 text-2xl font-semibold">No Interview Processes Yet</h2>
             <p className="mb-6 text-muted-foreground max-w-md">
-              Get started by creating your first interview process. Define positions, roles, and manage candidates through each stage.
+              {canCreate 
+                ? "Get started by creating your first interview process. Define positions, roles, and manage candidates through each stage."
+                : "No interview processes have been created yet. Contact HR Office to create one."}
             </p>
-            <Button onClick={() => setDialogOpen(true)} size="lg">
-              <Plus className="mr-2 h-4 w-4" />
-              Create First Process
-            </Button>
+            {canCreate && (
+              <Button onClick={() => setDialogOpen(true)} size="lg">
+                <Plus className="mr-2 h-4 w-4" />
+                Create First Process
+              </Button>
+            )}
           </div>
         ) : (
           <div>
@@ -88,11 +103,13 @@ export default function Dashboard() {
         )}
       </main>
 
-      <CreateProcessDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onCreateProcess={handleCreateProcess}
-      />
+      {canCreate && (
+        <CreateProcessDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onCreateProcess={handleCreateProcess}
+        />
+      )}
     </div>
   );
 }
