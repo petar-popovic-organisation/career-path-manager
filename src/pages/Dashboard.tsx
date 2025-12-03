@@ -4,8 +4,8 @@ import { ProcessCard } from "@/components/ProcessCard";
 import { CreateProcessDialog } from "@/components/CreateProcessDialog";
 import { UserMenu } from "@/components/UserMenu";
 import { InterviewProcess } from "@/types/recruitment";
-import { Plus, Briefcase, Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Plus, Briefcase, Loader2, Users } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 import { useProcesses, useCandidateCount } from "@/hooks/useRecruitmentData";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { canManageProcesses } from "@/types/auth";
@@ -52,6 +52,14 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {role === 'director_of_engineering' && (
+                <Link to="/user-management">
+                  <Button variant="outline" size="lg">
+                    <Users className="mr-2 h-4 w-4" />
+                    User Management
+                  </Button>
+                </Link>
+              )}
               {canCreate && (
                 <Button onClick={() => setDialogOpen(true)} size="lg">
                   <Plus className="mr-2 h-4 w-4" />
