@@ -192,10 +192,11 @@ export const useCandidates = (processId: string) => {
     status: CandidateStatus,
     description: string,
     decision?: CandidateDecision,
-    githubTaskUrl?: string
+    githubTaskUrl?: string,
+    updatedBy?: string
   ) => {
     try {
-      // Insert status update
+      // Insert status update with commenter name
       const { error: updateError } = await supabase
         .from('status_updates')
         .insert({
@@ -203,6 +204,7 @@ export const useCandidates = (processId: string) => {
           status: status,
           description,
           decision: decision as DbCandidateDecision | null,
+          updated_by: updatedBy || null,
         });
 
       if (updateError) throw updateError;

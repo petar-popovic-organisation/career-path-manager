@@ -11,7 +11,7 @@ import { CandidateStatusBadge } from "@/components/CandidateStatusBadge";
 import { CandidateTimeline } from "@/components/CandidateTimeline";
 import { UserMenu } from "@/components/UserMenu";
 import { Candidate, CandidateStatus, CandidateDecision } from "@/types/recruitment";
-import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2, Star, Calendar, ArrowUpDown, Github } from "lucide-react";
+import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2, Star, Calendar, ArrowUpDown, Github, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { useProcess, useCandidates } from "@/hooks/useRecruitmentData";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -92,8 +92,11 @@ export default function ProcessDetails() {
     await addCandidate(candidateData);
   };
 
+  const { profile } = useAuthContext();
+
   const handleUpdateStatus = async (candidateId: string, status: CandidateStatus, description: string, decision?: CandidateDecision, githubTaskUrl?: string) => {
-    await updateCandidateStatus(candidateId, status, description, decision, githubTaskUrl);
+    const commenterName = profile?.fullName || profile?.email || 'Unknown';
+    await updateCandidateStatus(candidateId, status, description, decision, githubTaskUrl, commenterName);
   };
 
   const openUpdateDialog = (candidate: Candidate) => {
@@ -190,7 +193,14 @@ export default function ProcessDetails() {
                     <div className="flex items-start justify-between">
                       <div className="space-y-2 flex-1">
                         <div className="flex items-center gap-2">
-                          <CardTitle>{candidate.name}</CardTitle>
+                          <Button 
+                            variant="link" 
+                            className="p-0 h-auto text-xl font-semibold"
+                            onClick={() => navigate(`/process/${id}/candidate/${candidate.id}`)}
+                          >
+                            {candidate.name}
+                            <ExternalLink className="h-4 w-4 ml-1" />
+                          </Button>
                           {candidate.rating && (
                             <Badge variant={isHighRated ? "default" : "secondary"} className={`gap-1 ${isHighRated ? 'bg-green-500 hover:bg-green-600 text-white' : ''}`}>
                               <Star className="h-3 w-3" />

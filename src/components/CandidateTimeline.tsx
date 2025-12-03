@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CandidateStatusBadge } from "./CandidateStatusBadge";
 import { format } from "date-fns";
-import { Clock, CheckCircle, XCircle } from "lucide-react";
+import { Clock, CheckCircle, XCircle, User } from "lucide-react";
 
 interface CandidateTimelineProps {
   history: StatusUpdate[];
@@ -55,9 +55,16 @@ export const CandidateTimeline = ({ history }: CandidateTimelineProps) => {
                       </Badge>
                     )}
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {format(new Date(update.timestamp), 'MMM dd, yyyy HH:mm')}
-                  </span>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    {update.updatedBy && (
+                      <span className="flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        {update.updatedBy}
+                      </span>
+                    )}
+                    <span>•</span>
+                    <span>{format(new Date(update.timestamp), 'MMM dd, yyyy HH:mm')}</span>
+                  </div>
                 </div>
                 {update.description && (
                   <div 
