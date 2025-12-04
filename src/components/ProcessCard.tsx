@@ -2,17 +2,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { InterviewProcess } from "@/types/recruitment";
-import { Calendar, Users } from "lucide-react";
+import { Calendar, Users, Lock } from "lucide-react";
 import { format } from "date-fns";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface ProcessCardProps {
   process: InterviewProcess;
   candidateCount: number;
   onViewDetails: () => void;
+  canManage?: boolean;
 }
 
-export const ProcessCard = ({ process, candidateCount, onViewDetails }: ProcessCardProps) => {
+export const ProcessCard = ({ process, candidateCount, onViewDetails, canManage }: ProcessCardProps) => {
+  const { role, user } = useAuthContext();
   const isActive = new Date(process.endDate) >= new Date();
+  const isOwner = process.createdBy === user?.id;
+  const isDirector = role === 'director_of_engineering';
+  const isHR = role === 'hr_office';
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -22,12 +28,20 @@ export const ProcessCard = ({ process, candidateCount, onViewDetails }: ProcessC
             <CardTitle className="text-xl">{process.position}</CardTitle>
             <CardDescription className="text-base">{process.role}</CardDescription>
           </div>
-          <Badge 
-            variant={isActive ? "default" : "secondary"}
-            className={isActive ? "bg-green-500 hover:bg-green-600 text-white" : ""}
-          >
-            {isActive ? "Active" : "Closed"}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {isHR && !isOwner && (
+              <Badge variant="outline" className="gap-1">
+                <Lock className="h-3 w-3" />
+                View Only
+              </Badge>
+            )}
+            <Badge 
+              variant={isActive ? "default" : "secondary"}
+              className={isActive ? "bg-green-500 hover:bg-green-600 text-white" : ""}
+            >
+              {isActive ? "Active" : "Closed"}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

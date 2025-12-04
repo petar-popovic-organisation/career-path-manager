@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { InterviewProcess, Candidate, StatusUpdate, CandidateStatus, CandidateDecision } from "@/types/recruitment";
+import { InterviewProcess, Candidate, StatusUpdate, CandidateStatus, CandidateDecision, ProcessAccess } from "@/types/recruitment";
 import { toast } from "sonner";
 
 // Type helpers for database
@@ -26,6 +26,7 @@ export const useProcesses = () => {
         startDate: p.start_date,
         endDate: p.end_date,
         createdAt: p.created_at,
+        createdBy: (p as any).created_by || undefined,
       })) || [];
 
       setProcesses(mapped);
@@ -37,8 +38,14 @@ export const useProcesses = () => {
     }
   };
 
-  const createProcess = async (processData: Omit<InterviewProcess, 'id' | 'createdAt'>) => {
+  const createProcess = async (
+    processData: Omit<InterviewProcess, 'id' | 'createdAt'>,
+    accessUserIds?: string[]
+  ) => {
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+
       const { data, error } = await supabase
         .from('interview_processes')
         .insert({
@@ -46,11 +53,28 @@ export const useProcesses = () => {
           role: processData.role,
           start_date: processData.startDate,
           end_date: processData.endDate,
+          created_by: userId,
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // Add process access for selected users
+      if (accessUserIds && accessUserIds.length > 0) {
+        const accessRows = accessUserIds.map(uid => ({
+          process_id: data.id,
+          user_id: uid,
+        }));
+        
+        const { error: accessError } = await supabase
+          .from('process_access')
+          .insert(accessRows);
+        
+        if (accessError) {
+          console.error('Error adding process access:', accessError);
+        }
+      }
 
       const newProcess: InterviewProcess = {
         id: data.id,
@@ -59,6 +83,7 @@ export const useProcesses = () => {
         startDate: data.start_date,
         endDate: data.end_date,
         createdAt: data.created_at,
+        createdBy: (data as any).created_by || undefined,
       };
 
       setProcesses(prev => [newProcess, ...prev]);
@@ -75,6 +100,98 @@ export const useProcesses = () => {
   }, []);
 
   return { processes, loading, createProcess, refetch: fetchProcesses };
+};
+
+export const useProcessAccess = (processId: string) => {
+  const [accessUsers, setAccessUsers] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAccess = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('process_access')
+        .select('user_id')
+        .eq('process_id', processId);
+
+      if (error) throw error;
+      setAccessUsers(data?.map(a => a.user_id) || []);
+    } catch (error) {
+      console.error('Error fetching process access:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addAccess = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('process_access')
+        .insert({ process_id: processId, user_id: userId });
+
+      if (error) throw error;
+      setAccessUsers(prev => [...prev, userId]);
+      toast.success('User access added');
+    } catch (error) {
+      console.error('Error adding access:', error);
+      toast.error('Failed to add user access');
+    }
+  };
+
+  const removeAccess = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('process_access')
+        .delete()
+        .eq('process_id', processId)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      setAccessUsers(prev => prev.filter(id => id !== userId));
+      toast.success('User access removed');
+    } catch (error) {
+      console.error('Error removing access:', error);
+      toast.error('Failed to remove user access');
+    }
+  };
+
+  useEffect(() => {
+    if (processId) {
+      fetchAccess();
+    }
+  }, [processId]);
+
+  return { accessUsers, loading, addAccess, removeAccess, refetch: fetchAccess };
+};
+
+export const useAvailableUsers = () => {
+  const [users, setUsers] = useState<{ userId: string; email: string; fullName: string | null }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('user_id, email, full_name')
+          .eq('is_active', true);
+
+        if (error) throw error;
+        setUsers(data?.map(u => ({
+          userId: u.user_id,
+          email: u.email,
+          fullName: u.full_name,
+        })) || []);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  return { users, loading };
 };
 
 export const useCandidates = (processId: string) => {
@@ -298,6 +415,7 @@ export const useProcess = (processId: string) => {
             startDate: data.start_date,
             endDate: data.end_date,
             createdAt: data.created_at,
+            createdBy: (data as any).created_by || undefined,
           });
         }
       } catch (error) {

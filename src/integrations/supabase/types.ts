@@ -76,6 +76,7 @@ export type Database = {
       interview_processes: {
         Row: {
           created_at: string
+          created_by: string | null
           end_date: string
           id: string
           position: string
@@ -85,6 +86,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           end_date: string
           id?: string
           position: string
@@ -94,6 +96,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           end_date?: string
           id?: string
           position?: string
@@ -102,6 +105,35 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      process_access: {
+        Row: {
+          created_at: string
+          id: string
+          process_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          process_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          process_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_access_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "interview_processes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
