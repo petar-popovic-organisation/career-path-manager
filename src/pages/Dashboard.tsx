@@ -25,8 +25,8 @@ export default function Dashboard() {
     }
   }, [processes]);
 
-  const handleCreateProcess = async (processData: Omit<InterviewProcess, 'id' | 'createdAt'>) => {
-    await createProcess(processData);
+  const handleCreateProcess = async (processData: Omit<InterviewProcess, 'id' | 'createdAt'>, accessUserIds?: string[]) => {
+    await createProcess(processData, accessUserIds);
   };
 
   if (loading) {

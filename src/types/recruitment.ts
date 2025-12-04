@@ -14,6 +14,14 @@ export interface InterviewProcess {
   startDate: string;
   endDate: string;
   createdAt: string;
+  createdBy?: string;
+}
+
+export interface ProcessAccess {
+  id: string;
+  processId: string;
+  userId: string;
+  createdAt: string;
 }
 
 export interface StatusUpdate {
