@@ -396,39 +396,69 @@ export const useProcess = (processId: string) => {
   const [process, setProcess] = useState<InterviewProcess | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProcess = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('interview_processes')
-          .select('*')
-          .eq('id', processId)
-          .maybeSingle();
+  const fetchProcess = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('interview_processes')
+        .select('*')
+        .eq('id', processId)
+        .maybeSingle();
 
-        if (error) throw error;
+      if (error) throw error;
 
-        if (data) {
-          setProcess({
-            id: data.id,
-            position: data.position,
-            role: data.role,
-            startDate: data.start_date,
-            endDate: data.end_date,
-            createdAt: data.created_at,
-            createdBy: (data as any).created_by || undefined,
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching process:', error);
-      } finally {
-        setLoading(false);
+      if (data) {
+        setProcess({
+          id: data.id,
+          position: data.position,
+          role: data.role,
+          startDate: data.start_date,
+          endDate: data.end_date,
+          createdAt: data.created_at,
+          createdBy: (data as any).created_by || undefined,
+        });
       }
-    };
+    } catch (error) {
+      console.error('Error fetching process:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const updateProcess = async (data: { position: string; role: string; startDate: string; endDate: string }) => {
+    try {
+      const { error } = await supabase
+        .from('interview_processes')
+        .update({
+          position: data.position,
+          role: data.role,
+          start_date: data.startDate,
+          end_date: data.endDate,
+        })
+        .eq('id', processId);
+
+      if (error) throw error;
+
+      setProcess(prev => prev ? {
+        ...prev,
+        position: data.position,
+        role: data.role,
+        startDate: data.startDate,
+        endDate: data.endDate,
+      } : null);
+
+      toast.success('Process updated successfully');
+    } catch (error) {
+      console.error('Error updating process:', error);
+      toast.error('Failed to update process');
+      throw error;
+    }
+  };
+
+  useEffect(() => {
     if (processId) {
       fetchProcess();
     }
   }, [processId]);
 
-  return { process, loading };
+  return { process, loading, updateProcess, refetch: fetchProcess };
 };
