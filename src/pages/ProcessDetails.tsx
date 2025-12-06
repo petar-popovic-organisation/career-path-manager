@@ -11,11 +11,12 @@ import { CandidateStatusBadge } from "@/components/CandidateStatusBadge";
 import { CandidateTimeline } from "@/components/CandidateTimeline";
 import { UserMenu } from "@/components/UserMenu";
 import { Candidate, CandidateStatus, CandidateDecision } from "@/types/recruitment";
-import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2, Star, Calendar, ArrowUpDown, Github, ExternalLink } from "lucide-react";
+import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2, Star, Calendar, ArrowUpDown, Github, ExternalLink, Users } from "lucide-react";
+import { ManageAccessDialog } from "@/components/ManageAccessDialog";
 import { format } from "date-fns";
 import { useProcess, useCandidates } from "@/hooks/useRecruitmentData";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { canManageCandidates, isViewOnly } from "@/types/auth";
+import { canManageCandidates, isViewOnly, isHrOffice } from "@/types/auth";
 
 type SortOption = 'latest' | 'oldest' | 'rating_high' | 'rating_low' | 'status';
 
@@ -30,18 +31,20 @@ const STATUS_ORDER: Record<CandidateStatus, number> = {
 export default function ProcessDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { role } = useAuthContext();
+  const { role, profile } = useAuthContext();
   
   const { process, loading: processLoading } = useProcess(id!);
   const { candidates, loading: candidatesLoading, addCandidate, updateCandidateStatus } = useCandidates(id!);
   
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
+  const [manageAccessOpen, setManageAccessOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('latest');
 
   const canManage = canManageCandidates(role);
   const viewOnly = isViewOnly(role);
+  const canManageAccess = isHrOffice(role) && process?.createdBy === profile?.userId;
 
   const sortedCandidates = useMemo(() => {
     return [...candidates].sort((a, b) => {
@@ -92,8 +95,6 @@ export default function ProcessDetails() {
     await addCandidate(candidateData);
   };
 
-  const { profile } = useAuthContext();
-
   const handleUpdateStatus = async (candidateId: string, status: CandidateStatus, description: string, decision?: CandidateDecision, githubTaskUrl?: string) => {
     const commenterName = profile?.fullName || profile?.email || 'Unknown';
     await updateCandidateStatus(candidateId, status, description, decision, githubTaskUrl, commenterName);
@@ -134,6 +135,12 @@ export default function ProcessDetails() {
               >
                 {isProcessActive ? "Active" : "Closed"}
               </Badge>
+              {canManageAccess && (
+                <Button variant="outline" onClick={() => setManageAccessOpen(true)}>
+                  <Users className="mr-2 h-4 w-4" />
+                  Manage Access
+                </Button>
+              )}
               {isProcessActive && canManage && (
                 <Button onClick={() => setAddDialogOpen(true)} size="lg">
                   <Plus className="mr-2 h-4 w-4" />
@@ -308,6 +315,14 @@ export default function ProcessDetails() {
           currentStatus={selectedCandidate.status}
           onUpdateStatus={(status, description, decision, githubTaskUrl) => handleUpdateStatus(selectedCandidate.id, status, description, decision, githubTaskUrl)}
           candidateName={selectedCandidate.name}
+        />
+      )}
+
+      {canManageAccess && (
+        <ManageAccessDialog
+          open={manageAccessOpen}
+          onOpenChange={setManageAccessOpen}
+          processId={id!}
         />
       )}
     </div>

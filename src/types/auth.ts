@@ -33,3 +33,7 @@ export const canManageCandidates = (role: AppRole | null): boolean => {
 export const isViewOnly = (role: AppRole | null): boolean => {
   return role === 'director_of_engineering';
 };
+
+export const isHrOffice = (role: AppRole | null): boolean => {
+  return role === 'hr_office';
+};
