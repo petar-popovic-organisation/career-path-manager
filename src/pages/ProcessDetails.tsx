@@ -11,8 +11,9 @@ import { CandidateStatusBadge } from "@/components/CandidateStatusBadge";
 import { CandidateTimeline } from "@/components/CandidateTimeline";
 import { UserMenu } from "@/components/UserMenu";
 import { Candidate, CandidateStatus, CandidateDecision } from "@/types/recruitment";
-import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2, Star, Calendar, ArrowUpDown, Github, ExternalLink, Users } from "lucide-react";
+import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2, Star, Calendar, ArrowUpDown, Github, ExternalLink, Users, Pencil } from "lucide-react";
 import { ManageAccessDialog } from "@/components/ManageAccessDialog";
+import { EditProcessDialog } from "@/components/EditProcessDialog";
 import { format } from "date-fns";
 import { useProcess, useCandidates } from "@/hooks/useRecruitmentData";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -33,18 +34,21 @@ export default function ProcessDetails() {
   const navigate = useNavigate();
   const { role, profile } = useAuthContext();
   
-  const { process, loading: processLoading } = useProcess(id!);
+  const { process, loading: processLoading, updateProcess } = useProcess(id!);
   const { candidates, loading: candidatesLoading, addCandidate, updateCandidateStatus } = useCandidates(id!);
   
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [manageAccessOpen, setManageAccessOpen] = useState(false);
+  const [editProcessOpen, setEditProcessOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('latest');
 
   const canManage = canManageCandidates(role);
   const viewOnly = isViewOnly(role);
-  const canManageAccess = isHrOffice(role) && process?.createdBy === profile?.userId;
+  const isProcessOwner = isHrOffice(role) && process?.createdBy === profile?.userId;
+  const canManageAccess = isProcessOwner;
+  const canEditProcess = isProcessOwner;
 
   const sortedCandidates = useMemo(() => {
     return [...candidates].sort((a, b) => {
@@ -135,6 +139,12 @@ export default function ProcessDetails() {
               >
                 {isProcessActive ? "Active" : "Closed"}
               </Badge>
+              {canEditProcess && (
+                <Button variant="outline" onClick={() => setEditProcessOpen(true)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              )}
               {canManageAccess && (
                 <Button variant="outline" onClick={() => setManageAccessOpen(true)}>
                   <Users className="mr-2 h-4 w-4" />
@@ -323,6 +333,15 @@ export default function ProcessDetails() {
           open={manageAccessOpen}
           onOpenChange={setManageAccessOpen}
           processId={id!}
+        />
+      )}
+
+      {canEditProcess && process && (
+        <EditProcessDialog
+          open={editProcessOpen}
+          onOpenChange={setEditProcessOpen}
+          process={process}
+          onUpdateProcess={updateProcess}
         />
       )}
     </div>
