@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { InterviewProcess, Candidate, StatusUpdate, CandidateStatus, CandidateDecision, ProcessAccess } from "@/types/recruitment";
+import { InterviewProcess, Candidate, StatusUpdate, CandidateStatus, CandidateDecision, ProcessAccess, OfferStatus } from "@/types/recruitment";
 import { toast } from "sonner";
 
 // Type helpers for database
 type DbCandidateDecision = 'pass' | 'fail';
+type DbOfferStatus = 'pending' | 'sent' | 'accepted' | 'rejected';
 
 export const useProcesses = () => {
   const [processes, setProcesses] = useState<InterviewProcess[]>([]);
@@ -246,6 +247,12 @@ export const useCandidates = (processId: string) => {
           status: c.status as CandidateStatus,
           statusHistory: history,
           finalDecision: c.final_decision as CandidateDecision | undefined,
+          finalDecisionDate: (c as any).final_decision_date || undefined,
+          offerStatus: ((c as any).offer_status as OfferStatus) || undefined,
+          offerDescription: (c as any).offer_description || undefined,
+          offerStartDate: (c as any).offer_start_date || undefined,
+          offerRejectionReason: (c as any).offer_rejection_reason || undefined,
+          offerDecisionDate: (c as any).offer_decision_date || undefined,
           createdAt: c.created_at,
           updatedAt: c.updated_at,
         };
@@ -310,7 +317,9 @@ export const useCandidates = (processId: string) => {
     description: string,
     decision?: CandidateDecision,
     githubTaskUrl?: string,
-    updatedBy?: string
+    updatedBy?: string,
+    processPosition?: string,
+    processRole?: string
   ) => {
     try {
       // Insert status update with commenter name
@@ -326,13 +335,26 @@ export const useCandidates = (processId: string) => {
 
       if (updateError) throw updateError;
 
-      // Update candidate status and final decision if failed
-      const updates: { status: string; final_decision?: DbCandidateDecision | null; github_task_url?: string | null } = {
+      // Update candidate status and final decision
+      const updates: { 
+        status: string; 
+        final_decision?: DbCandidateDecision | null; 
+        final_decision_date?: string;
+        github_task_url?: string | null;
+        offer_status?: DbOfferStatus;
+      } = {
         status: status,
       };
       
       if (decision === 'fail') {
         updates.final_decision = 'fail';
+        updates.final_decision_date = new Date().toISOString();
+      }
+
+      if (decision === 'pass' && status === 'final_decision') {
+        updates.final_decision = 'pass';
+        updates.final_decision_date = new Date().toISOString();
+        updates.offer_status = 'pending';
       }
 
       if (githubTaskUrl) {
@@ -346,10 +368,76 @@ export const useCandidates = (processId: string) => {
 
       if (candidateError) throw candidateError;
 
+      // If candidate passed final decision, notify HR
+      if (decision === 'pass' && status === 'final_decision') {
+        const candidate = candidates.find(c => c.id === candidateId);
+        if (candidate && processPosition && processRole) {
+          try {
+            await supabase.functions.invoke('notify-hr-candidate-passed', {
+              body: {
+                candidateName: candidate.name,
+                candidateEmail: candidate.email,
+                processPosition,
+                processRole,
+              },
+            });
+            toast.success('HR has been notified about this candidate');
+          } catch (emailError) {
+            console.error('Error sending HR notification:', emailError);
+            // Don't fail the whole operation if email fails
+          }
+        }
+      }
+
       await fetchCandidates();
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error('Failed to update status');
+      throw error;
+    }
+  };
+
+  const updateOfferStatus = async (
+    candidateId: string,
+    offerStatus: OfferStatus,
+    offerDescription?: string,
+    offerStartDate?: string,
+    offerRejectionReason?: string
+  ) => {
+    try {
+      const updates: {
+        offer_status: DbOfferStatus;
+        offer_description?: string | null;
+        offer_start_date?: string | null;
+        offer_rejection_reason?: string | null;
+        offer_decision_date?: string | null;
+      } = {
+        offer_status: offerStatus,
+      };
+
+      if (offerStatus === 'accepted') {
+        updates.offer_description = offerDescription || null;
+        updates.offer_start_date = offerStartDate || null;
+        updates.offer_decision_date = new Date().toISOString();
+      }
+
+      if (offerStatus === 'rejected') {
+        updates.offer_rejection_reason = offerRejectionReason || null;
+        updates.offer_decision_date = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('candidates')
+        .update(updates)
+        .eq('id', candidateId);
+
+      if (error) throw error;
+
+      await fetchCandidates();
+      toast.success(`Offer ${offerStatus} recorded`);
+    } catch (error) {
+      console.error('Error updating offer status:', error);
+      toast.error('Failed to update offer status');
       throw error;
     }
   };
@@ -360,7 +448,7 @@ export const useCandidates = (processId: string) => {
     }
   }, [processId]);
 
-  return { candidates, loading, addCandidate, updateCandidateStatus, refetch: fetchCandidates };
+  return { candidates, loading, addCandidate, updateCandidateStatus, updateOfferStatus, refetch: fetchCandidates };
 };
 
 export const useCandidateCount = () => {

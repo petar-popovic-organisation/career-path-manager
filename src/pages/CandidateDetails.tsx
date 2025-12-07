@@ -7,12 +7,13 @@ import { CandidateTimeline } from "@/components/CandidateTimeline";
 import { UserMenu } from "@/components/UserMenu";
 import { useProcess, useCandidates } from "@/hooks/useRecruitmentData";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { canManageCandidates, isViewOnly } from "@/types/auth";
-import { ArrowLeft, Mail, Linkedin, DollarSign, XCircle, Loader2, Star, Calendar, Github } from "lucide-react";
+import { canManageCandidates, isViewOnly, isHrOffice } from "@/types/auth";
+import { ArrowLeft, Mail, Linkedin, DollarSign, XCircle, Loader2, Star, Calendar, Github, Gift, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { UpdateStatusDialog } from "@/components/UpdateStatusDialog";
-import { CandidateStatus, CandidateDecision } from "@/types/recruitment";
+import { OfferManagementDialog } from "@/components/OfferManagementDialog";
+import { CandidateStatus, CandidateDecision, OfferStatus } from "@/types/recruitment";
 
 export default function CandidateDetails() {
   const { processId, candidateId } = useParams();
@@ -20,9 +21,10 @@ export default function CandidateDetails() {
   const { role, profile } = useAuthContext();
   
   const { process, loading: processLoading } = useProcess(processId!);
-  const { candidates, loading: candidatesLoading, updateCandidateStatus } = useCandidates(processId!);
+  const { candidates, loading: candidatesLoading, updateCandidateStatus, updateOfferStatus } = useCandidates(processId!);
   
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
+  const [offerDialogOpen, setOfferDialogOpen] = useState(false);
 
   const candidate = candidates.find(c => c.id === candidateId);
   const canManage = canManageCandidates(role);
@@ -49,11 +51,25 @@ export default function CandidateDetails() {
 
   const handleUpdateStatus = async (status: CandidateStatus, description: string, decision?: CandidateDecision, githubTaskUrl?: string) => {
     const commenterName = profile?.fullName || profile?.email || 'Unknown';
-    await updateCandidateStatus(candidateId!, status, description, decision, githubTaskUrl, commenterName);
+    await updateCandidateStatus(candidateId!, status, description, decision, githubTaskUrl, commenterName, process?.position, process?.role);
+  };
+
+  const handleSendOffer = async () => {
+    await updateOfferStatus(candidateId!, 'sent');
+  };
+
+  const handleUpdateOffer = async (decision: 'accepted' | 'rejected', description: string, startDate?: string) => {
+    if (decision === 'accepted') {
+      await updateOfferStatus(candidateId!, 'accepted', description, startDate);
+    } else {
+      await updateOfferStatus(candidateId!, 'rejected', undefined, undefined, description);
+    }
   };
 
   const isFailed = candidate.finalDecision === 'fail';
+  const isPassed = candidate.finalDecision === 'pass';
   const isHighRated = candidate.rating && candidate.rating > 5;
+  const canManageOffer = isHrOffice(role) && isPassed && (candidate.offerStatus === 'pending' || candidate.offerStatus === 'sent');
 
   return (
     <div className="min-h-screen bg-background">
@@ -82,6 +98,12 @@ export default function CandidateDetails() {
                     Failed
                   </Badge>
                 )}
+                {isPassed && (
+                  <Badge className="gap-1 bg-green-500 hover:bg-green-600 text-white">
+                    <CheckCircle className="h-3 w-3" />
+                    Passed
+                  </Badge>
+                )}
               </div>
               <p className="text-lg text-muted-foreground">{process.position} - {process.role}</p>
               {viewOnly && (
@@ -90,7 +112,13 @@ export default function CandidateDetails() {
             </div>
             <div className="flex items-center gap-3">
               <CandidateStatusBadge status={candidate.status} />
-              {!isFailed && isProcessActive && canManage && (
+              {canManageOffer && (
+                <Button onClick={() => setOfferDialogOpen(true)} size="lg" className="bg-green-600 hover:bg-green-700">
+                  <Gift className="mr-2 h-4 w-4" />
+                  Manage Offer
+                </Button>
+              )}
+              {!isFailed && !isPassed && isProcessActive && canManage && (
                 <Button onClick={() => setUpdateDialogOpen(true)} size="lg">
                   Add Comment
                 </Button>
@@ -150,6 +178,36 @@ export default function CandidateDetails() {
                   </a>
                 </div>
               )}
+              {candidate.finalDecisionDate && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span>Final Decision: {format(new Date(candidate.finalDecisionDate), 'MMM dd, yyyy')}</span>
+                </div>
+              )}
+              {candidate.offerStatus && candidate.offerStatus !== 'pending' && (
+                <div className="mt-4 pt-4 border-t">
+                  <h4 className="font-semibold mb-2">Offer Status</h4>
+                  <Badge variant={candidate.offerStatus === 'accepted' ? 'default' : candidate.offerStatus === 'rejected' ? 'destructive' : 'secondary'}>
+                    {candidate.offerStatus.charAt(0).toUpperCase() + candidate.offerStatus.slice(1)}
+                  </Badge>
+                  {candidate.offerDecisionDate && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Decided: {format(new Date(candidate.offerDecisionDate), 'MMM dd, yyyy')}
+                    </p>
+                  )}
+                  {candidate.offerStatus === 'accepted' && candidate.offerStartDate && (
+                    <p className="text-sm mt-2">
+                      <strong>Start Date:</strong> {format(new Date(candidate.offerStartDate), 'MMM dd, yyyy')}
+                    </p>
+                  )}
+                  {candidate.offerStatus === 'accepted' && candidate.offerDescription && (
+                    <p className="text-sm mt-1 text-muted-foreground">{candidate.offerDescription}</p>
+                  )}
+                  {candidate.offerStatus === 'rejected' && candidate.offerRejectionReason && (
+                    <p className="text-sm mt-1 text-muted-foreground"><strong>Reason:</strong> {candidate.offerRejectionReason}</p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -175,6 +233,17 @@ export default function CandidateDetails() {
           currentStatus={candidate.status}
           onUpdateStatus={handleUpdateStatus}
           candidateName={candidate.name}
+        />
+      )}
+
+      {canManageOffer && (
+        <OfferManagementDialog
+          open={offerDialogOpen}
+          onOpenChange={setOfferDialogOpen}
+          candidateName={candidate.name}
+          currentOfferStatus={candidate.offerStatus || 'pending'}
+          onUpdateOffer={handleUpdateOffer}
+          onSendOffer={handleSendOffer}
         />
       )}
     </div>

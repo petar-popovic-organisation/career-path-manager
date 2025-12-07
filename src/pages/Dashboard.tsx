@@ -3,21 +3,25 @@ import { Button } from "@/components/ui/button";
 import { ProcessCard } from "@/components/ProcessCard";
 import { CreateProcessDialog } from "@/components/CreateProcessDialog";
 import { UserMenu } from "@/components/UserMenu";
+import { CandidatesReadyForOffer } from "@/components/CandidatesReadyForOffer";
 import { InterviewProcess } from "@/types/recruitment";
 import { Plus, Briefcase, Loader2, Users, History } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useProcesses, useCandidateCount } from "@/hooks/useRecruitmentData";
+import { useCandidatesForOffer } from "@/hooks/useCandidatesForOffer";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { canManageProcesses } from "@/types/auth";
+import { canManageProcesses, isHrOffice } from "@/types/auth";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { role } = useAuthContext();
   const { processes, loading, createProcess } = useProcesses();
   const { counts, fetchCounts } = useCandidateCount();
+  const { candidates: candidatesForOffer, loading: offerLoading } = useCandidatesForOffer();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const canCreate = canManageProcesses(role);
+  const showOfferPanel = isHrOffice(role);
 
   useEffect(() => {
     if (processes.length > 0) {
@@ -79,6 +83,9 @@ export default function Dashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {showOfferPanel && (
+          <CandidatesReadyForOffer candidates={candidatesForOffer} loading={offerLoading} />
+        )}
         {processes.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
