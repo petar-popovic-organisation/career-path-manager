@@ -33,6 +33,8 @@ export interface StatusUpdate {
   decision?: CandidateDecision;
 }
 
+export type OfferStatus = 'pending' | 'sent' | 'accepted' | 'rejected';
+
 export interface Candidate {
   id: string;
   name: string;
@@ -45,6 +47,12 @@ export interface Candidate {
   status: CandidateStatus;
   statusHistory: StatusUpdate[];
   finalDecision?: CandidateDecision;
+  finalDecisionDate?: string;
+  offerStatus?: OfferStatus;
+  offerDescription?: string;
+  offerStartDate?: string;
+  offerRejectionReason?: string;
+  offerDecisionDate?: string;
   createdAt: string;
   updatedAt: string;
 }
