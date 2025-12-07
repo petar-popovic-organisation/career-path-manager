@@ -22,10 +22,16 @@ export type Database = {
           final_decision:
             | Database["public"]["Enums"]["candidate_decision"]
             | null
+          final_decision_date: string | null
           github_task_url: string | null
           id: string
           linkedin_url: string | null
           name: string
+          offer_decision_date: string | null
+          offer_description: string | null
+          offer_rejection_reason: string | null
+          offer_start_date: string | null
+          offer_status: string | null
           process_id: string
           rating: number | null
           status: string
@@ -38,10 +44,16 @@ export type Database = {
           final_decision?:
             | Database["public"]["Enums"]["candidate_decision"]
             | null
+          final_decision_date?: string | null
           github_task_url?: string | null
           id?: string
           linkedin_url?: string | null
           name: string
+          offer_decision_date?: string | null
+          offer_description?: string | null
+          offer_rejection_reason?: string | null
+          offer_start_date?: string | null
+          offer_status?: string | null
           process_id: string
           rating?: number | null
           status?: string
@@ -54,10 +66,16 @@ export type Database = {
           final_decision?:
             | Database["public"]["Enums"]["candidate_decision"]
             | null
+          final_decision_date?: string | null
           github_task_url?: string | null
           id?: string
           linkedin_url?: string | null
           name?: string
+          offer_decision_date?: string | null
+          offer_description?: string | null
+          offer_rejection_reason?: string | null
+          offer_start_date?: string | null
+          offer_status?: string | null
           process_id?: string
           rating?: number | null
           status?: string
