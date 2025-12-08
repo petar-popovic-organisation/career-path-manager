@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AddCandidateDialog } from "@/components/AddCandidateDialog";
 import { UpdateStatusDialog } from "@/components/UpdateStatusDialog";
 import { CandidateStatusBadge } from "@/components/CandidateStatusBadge";
+import { OfferStatusBadge } from "@/components/OfferStatusBadge";
 import { CandidateTimeline } from "@/components/CandidateTimeline";
 import { UserMenu } from "@/components/UserMenu";
-import { Candidate, CandidateStatus, CandidateDecision } from "@/types/recruitment";
-import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2, Star, Calendar, ArrowUpDown, Github, ExternalLink, Users, Pencil } from "lucide-react";
+import { Candidate, CandidateStatus, CandidateDecision, OfferStatus } from "@/types/recruitment";
+import { ArrowLeft, Plus, Mail, ChevronDown, MessageSquare, Linkedin, DollarSign, XCircle, Loader2, Star, Calendar, ArrowUpDown, Github, ExternalLink, Users, Pencil, CheckCircle } from "lucide-react";
 import { ManageAccessDialog } from "@/components/ManageAccessDialog";
 import { EditProcessDialog } from "@/components/EditProcessDialog";
 import { format } from "date-fns";
@@ -202,6 +203,7 @@ export default function ProcessDetails() {
             </div>
             {sortedCandidates.map((candidate) => {
               const isFailed = candidate.finalDecision === 'fail';
+              const isPassed = candidate.finalDecision === 'pass';
               const isHighRated = candidate.rating && candidate.rating > 5;
               
               return (
@@ -224,11 +226,20 @@ export default function ProcessDetails() {
                               {candidate.rating}/10
                             </Badge>
                           )}
+                          {isPassed && (
+                            <Badge className="gap-1 bg-green-500 hover:bg-green-600 text-white">
+                              <CheckCircle className="h-3 w-3" />
+                              Passed
+                            </Badge>
+                          )}
                           {isFailed && (
                             <Badge variant="destructive" className="gap-1">
                               <XCircle className="h-3 w-3" />
                               Failed
                             </Badge>
+                          )}
+                          {isPassed && candidate.offerStatus && (
+                            <OfferStatusBadge status={candidate.offerStatus as OfferStatus} />
                           )}
                         </div>
                         <div className="space-y-1">
