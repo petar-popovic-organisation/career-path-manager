@@ -10,6 +10,7 @@ import ProcessDetails from "./pages/ProcessDetails";
 import CandidateDetails from "./pages/CandidateDetails";
 import UserManagement from "./pages/UserManagement";
 import CandidatesHistory from "./pages/CandidatesHistory";
+import OfferHistory from "./pages/OfferHistory";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/process/:processId/candidate/:candidateId" element={<ProtectedRoute><CandidateDetails /></ProtectedRoute>} />
             <Route path="/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
             <Route path="/candidates" element={<ProtectedRoute><CandidatesHistory /></ProtectedRoute>} />
+            <Route path="/offers" element={<ProtectedRoute><OfferHistory /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

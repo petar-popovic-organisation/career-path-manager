@@ -5,7 +5,7 @@ import { CreateProcessDialog } from "@/components/CreateProcessDialog";
 import { UserMenu } from "@/components/UserMenu";
 import { CandidatesReadyForOffer } from "@/components/CandidatesReadyForOffer";
 import { InterviewProcess } from "@/types/recruitment";
-import { Plus, Briefcase, Loader2, Users, History } from "lucide-react";
+import { Plus, Briefcase, Loader2, Users, History, Gift } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useProcesses, useCandidateCount } from "@/hooks/useRecruitmentData";
 import { useCandidatesForOffer } from "@/hooks/useCandidatesForOffer";
@@ -62,6 +62,14 @@ export default function Dashboard() {
                   All Candidates
                 </Button>
               </Link>
+              {showOfferPanel && (
+                <Link to="/offers">
+                  <Button variant="outline" size="lg">
+                    <Gift className="mr-2 h-4 w-4" />
+                    Offer History
+                  </Button>
+                </Link>
+              )}
               {role === 'director_of_engineering' && (
                 <Link to="/user-management">
                   <Button variant="outline" size="lg">

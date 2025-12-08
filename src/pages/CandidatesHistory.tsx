@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { UserMenu } from "@/components/UserMenu";
 import { CandidateStatusBadge } from "@/components/CandidateStatusBadge";
+import { OfferStatusBadge } from "@/components/OfferStatusBadge";
 import { useAllCandidates } from "@/hooks/useAllCandidates";
-import { ArrowLeft, Mail, Loader2, Star, Calendar, Search, XCircle, ExternalLink, Briefcase } from "lucide-react";
+import { OfferStatus } from "@/types/recruitment";
+import { ArrowLeft, Mail, Loader2, Star, Calendar, Search, XCircle, ExternalLink, Briefcase, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 
 export default function CandidatesHistory() {
@@ -91,6 +93,7 @@ export default function CandidatesHistory() {
           <div className="space-y-4">
             {filteredCandidates.map((candidate) => {
               const isFailed = candidate.finalDecision === 'fail';
+              const isPassed = candidate.finalDecision === 'pass';
               const isHighRated = candidate.rating && candidate.rating > 5;
 
               return (
@@ -119,11 +122,20 @@ export default function CandidatesHistory() {
                               {candidate.rating}/10
                             </Badge>
                           )}
+                          {isPassed && (
+                            <Badge className="gap-1 bg-green-500 hover:bg-green-600 text-white">
+                              <CheckCircle className="h-3 w-3" />
+                              Passed
+                            </Badge>
+                          )}
                           {isFailed && (
                             <Badge variant="destructive" className="gap-1">
                               <XCircle className="h-3 w-3" />
                               Failed
                             </Badge>
+                          )}
+                          {isPassed && candidate.offerStatus && (
+                            <OfferStatusBadge status={candidate.offerStatus as OfferStatus} />
                           )}
                         </div>
                         <div className="space-y-1">
